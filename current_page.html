@@ -305,9 +305,7 @@
                 
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">항목</label>
-                  <select id="transaction-item" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    <option value="">항목을 선택하세요</option>
-                  </select>
+                  <input type="text" id="transaction-item" placeholder="헌금, 후원금, 교재비 등" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 
                 <div>
@@ -316,18 +314,13 @@
                 </div>
                 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">담당자 <span class="text-gray-400">(선택사항)</span></label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">담당자</label>
                   <input type="text" id="transaction-manager" placeholder="담당자명" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">적요 <span class="text-gray-400">(선택사항)</span></label>
-                  <input type="text" id="transaction-memo" placeholder="간단한 메모" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                
                 <div class="md:col-span-2 lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">설명 <span class="text-gray-400">(선택사항)</span></label>
-                  <textarea id="transaction-description" rows="2" placeholder="상세 설명" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                  <textarea id="transaction-description" rows="2" placeholder="상세 설명 (선택사항)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                 </div>
                 
                 <div class="md:col-span-2 lg:col-span-3 flex space-x-3">
@@ -404,7 +397,6 @@
                         금액 <i id="sort-amount-icon" class="fas fa-sort ml-1"></i>
                       </th>
                       <th class="px-4 py-3 text-left font-semibold text-gray-700">담당자</th>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">적요</th>
                       <th class="px-4 py-3 text-center font-semibold text-gray-700">작업</th>
                     </tr>
                   </thead>
@@ -741,7 +733,6 @@
                       <th class="px-4 py-3 text-left font-semibold text-gray-700">구분</th>
                       <th class="px-4 py-3 text-left font-semibold text-gray-700">항목</th>
                       <th class="px-4 py-3 text-right font-semibold text-gray-700">금액</th>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">적요</th>
                     </tr>
                   </thead>
                   <tbody id="recent-transactions-table" class="bg-white divide-y divide-gray-200">
