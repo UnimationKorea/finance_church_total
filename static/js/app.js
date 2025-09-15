@@ -507,7 +507,7 @@ function handleCsvUpload(content) {
     // 필수 헤더 확인 (영어/한국어 컬럼명 모두 지원)
     const headerMappings = {
       date: ['date', '날짜', '일자'],
-      type: ['type', '구분', '종류', '타입'],
+      type: ['type', '구분', '종류', '타입', '유형'],
       item: ['item', '항목', '내용'],
       amount: ['amount', '금액', '액수'],
       department: ['department', '부서', '팀'],
