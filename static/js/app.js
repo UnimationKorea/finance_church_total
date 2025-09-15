@@ -504,14 +504,36 @@ function handleCsvUpload(content) {
     const headers = parseCSVLine(headerLine)
     console.log('📝 파싱된 헤더:', headers)
     
-    // 필수 헤더 확인
-    const requiredHeaders = ['date', 'type', 'item', 'amount']
-    const missingHeaders = requiredHeaders.filter(h => !headers.some(header => 
-      header.toLowerCase().includes(h.toLowerCase())
-    ))
+    // 필수 헤더 확인 (영어/한국어 컬럼명 모두 지원)
+    const headerMappings = {
+      date: ['date', '날짜', '일자'],
+      type: ['type', '구분', '종류', '타입'],
+      item: ['item', '항목', '내용'],
+      amount: ['amount', '금액', '액수'],
+      department: ['department', '부서', '팀'],
+      manager: ['manager', '담당자', '관리자'],
+      memo: ['memo', '적요', '메모'],
+      description: ['description', '설명', '비고', '상세내용']
+    }
     
-    if (missingHeaders.length > 0) {
-      throw new Error(`필수 컬럼이 누락되었습니다: ${missingHeaders.join(', ')}. 필요한 컬럼: date, type, item, amount`)
+    // 헤더 매핑 함수
+    function findHeaderIndex(headerName) {
+      const possibleNames = headerMappings[headerName] || []
+      return headers.findIndex(header => 
+        possibleNames.some(name => 
+          header.toLowerCase().trim() === name.toLowerCase() ||
+          header.toLowerCase().includes(name.toLowerCase())
+        )
+      )
+    }
+    
+    // 필수 컬럼 확인
+    const requiredFields = ['date', 'type', 'item', 'amount']
+    const missingFields = requiredFields.filter(field => findHeaderIndex(field) === -1)
+    
+    if (missingFields.length > 0) {
+      const koreanNames = missingFields.map(field => headerMappings[field] ? headerMappings[field].join('/') : field)
+      throw new Error(`필수 컬럼이 누락되었습니다: ${koreanNames.join(', ')}. 현재 헤더: ${headers.join(', ')}`)
     }
     
     const transactions = []
@@ -535,17 +557,24 @@ function handleCsvUpload(content) {
           continue
         }
         
+        // 헤더 매핑을 사용한 데이터 파싱
         const transaction = {}
-        headers.forEach((header, index) => {
-          const cleanHeader = header.toLowerCase().trim()
-          transaction[cleanHeader] = values[index] ? values[index].trim() : ''
-        })
+        
+        // 각 필드의 인덱스 찾기
+        const dateIndex = findHeaderIndex('date')
+        const typeIndex = findHeaderIndex('type')
+        const itemIndex = findHeaderIndex('item')
+        const amountIndex = findHeaderIndex('amount')
+        const departmentIndex = findHeaderIndex('department')
+        const managerIndex = findHeaderIndex('manager')
+        const memoIndex = findHeaderIndex('memo')
+        const descriptionIndex = findHeaderIndex('description')
         
         // 필수 필드 검증 및 변환
-        const dateValue = transaction.date || transaction['날짜']
-        const typeValue = transaction.type || transaction['구분'] || transaction['유형']
-        let itemValue = transaction.item || transaction['항목'] || transaction['내용']
-        const amountValue = transaction.amount || transaction['금액']
+        const dateValue = dateIndex >= 0 ? values[dateIndex]?.trim() : ''
+        const typeValue = typeIndex >= 0 ? values[typeIndex]?.trim() : ''
+        let itemValue = itemIndex >= 0 ? values[itemIndex]?.trim() : ''
+        const amountValue = amountIndex >= 0 ? values[amountIndex]?.trim() : ''
         
         if (!dateValue || !typeValue || !itemValue || !amountValue) {
           console.warn(`⚠️ 라인 ${i}: 필수 필드 누락`, { dateValue, typeValue, itemValue, amountValue })
@@ -609,11 +638,12 @@ function handleCsvUpload(content) {
         const processedTransaction = {
           date: dateObj.toISOString().split('T')[0],
           type: normalizedType,
-          department: transaction.department || transaction['부서'] || currentDepartment || '기타',
+          department: (departmentIndex >= 0 ? values[departmentIndex]?.trim() : '') || currentDepartment || '기타',
           item: normalizedItem,
           amount: numericAmount,
-          manager: transaction.manager || transaction['담당자'] || '',
-          description: transaction.description || transaction['설명'] || transaction['비고'] || '',
+          manager: managerIndex >= 0 ? values[managerIndex]?.trim() || '' : '',
+          memo: memoIndex >= 0 ? values[memoIndex]?.trim() || '' : '',
+          description: descriptionIndex >= 0 ? values[descriptionIndex]?.trim() || '' : '',
           id: `csv_${Date.now()}_${i}`,
           createdAt: new Date().toISOString()
         }
