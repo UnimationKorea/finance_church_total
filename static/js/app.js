@@ -128,8 +128,11 @@ function renderTransactionsList(transactions) {
   
   if (noDataMessage) noDataMessage.classList.add('hidden')
   
-  // 거래 목록 렌더링
-  tbody.innerHTML = transactions.map((t, index) => `
+  // 정렬 적용
+  const sortedTransactions = getSortedTransactions(transactions)
+  
+  // 거래 목록 렌더링 (정렬된 데이터 사용)
+  tbody.innerHTML = sortedTransactions.map((t, index) => `
     <tr class="hover:bg-gray-50">
       <td class="px-4 py-3">${new Date(t.date).toLocaleDateString('ko-KR')}</td>
       <td class="px-4 py-3">
@@ -322,6 +325,9 @@ function updateTransactionsDashboard(transactions) {
   // 부서별 요약 업데이트
   updateDepartmentSummary(transactions)
   
+  // 부서별 월별 차트 업데이트
+  updateDepartmentMonthlyCharts(transactions)
+  
   // 최근 거래 리스트 업데이트
   updateRecentTransactionsList(transactions)
 }
@@ -398,6 +404,107 @@ function updateRecentTransactionsList(transactions) {
   `).join('')
 }
 
+// 부서별 월별 차트 업데이트
+function updateDepartmentMonthlyCharts(transactions) {
+  const container = document.getElementById('department-monthly-charts')
+  if (!container) return
+  
+  // 부서별 월별 데이터 집계
+  const departmentMonthlyData = {}
+  const departments = [...new Set(transactions.map(t => t.department || '기타'))]
+  
+  transactions.forEach(t => {
+    const dept = t.department || '기타'
+    const date = new Date(t.date)
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    
+    if (!departmentMonthlyData[dept]) {
+      departmentMonthlyData[dept] = {}
+    }
+    
+    if (!departmentMonthlyData[dept][monthKey]) {
+      departmentMonthlyData[dept][monthKey] = { income: 0, expense: 0, budget: 0 }
+    }
+    
+    if (t.type === '수입') {
+      departmentMonthlyData[dept][monthKey].income += t.amount || 0
+    } else if (t.type === '지출') {
+      departmentMonthlyData[dept][monthKey].expense += t.amount || 0
+    } else if (t.type === '예산') {
+      departmentMonthlyData[dept][monthKey].budget += t.amount || 0
+    }
+  })
+  
+  // 각 부서별 차트 생성
+  container.innerHTML = departments.map(dept => {
+    const deptData = departmentMonthlyData[dept] || {}
+    const months = Object.keys(deptData).sort()
+    
+    if (months.length === 0) return ''
+    
+    // 부서별 총 예산 계산
+    const totalBudget = months.reduce((sum, month) => sum + deptData[month].budget, 0)
+    let cumulativeExpense = 0
+    
+    return `
+      <div class="border border-gray-200 rounded-lg p-3">
+        <h4 class="font-medium text-gray-800 mb-3">${dept}</h4>
+        <div class="space-y-2">
+          ${months.map(month => {
+            const data = deptData[month]
+            cumulativeExpense += data.expense
+            const budgetRatio = totalBudget > 0 ? (cumulativeExpense / totalBudget) * 100 : 0
+            const balance = data.income - data.expense
+            const [year, monthNum] = month.split('-')
+            const label = `${monthNum}월`
+            
+            return `
+              <div class="bg-gray-50 rounded p-2">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-sm font-medium">${label}</span>
+                  <div class="text-xs text-gray-600">
+                    <span class="mr-2">잔액: ₩${new Intl.NumberFormat('ko-KR').format(balance)}</span>
+                    <span>예산대비: ${budgetRatio.toFixed(1)}%</span>
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <!-- 수입 -->
+                  <div>
+                    <div class="text-green-600 font-medium mb-1">수입</div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div class="bg-green-500 h-2 rounded-full" style="width: ${Math.min(100, Math.max(2, (data.income / Math.max(data.income, data.expense, 1)) * 100))}%"></div>
+                    </div>
+                    <div class="text-gray-600 mt-1">₩${new Intl.NumberFormat('ko-KR').format(data.income)}</div>
+                  </div>
+                  
+                  <!-- 지출 -->
+                  <div>
+                    <div class="text-red-600 font-medium mb-1">지출</div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div class="bg-red-500 h-2 rounded-full" style="width: ${Math.min(100, Math.max(2, (data.expense / Math.max(data.income, data.expense, 1)) * 100))}%"></div>
+                    </div>
+                    <div class="text-gray-600 mt-1">₩${new Intl.NumberFormat('ko-KR').format(data.expense)}</div>
+                  </div>
+                  
+                  <!-- 예산 대비 지출 -->
+                  <div>
+                    <div class="text-blue-600 font-medium mb-1">예산대비</div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div class="bg-blue-500 h-2 rounded-full" style="width: ${Math.min(100, Math.max(2, budgetRatio))}%"></div>
+                    </div>
+                    <div class="text-gray-600 mt-1">${budgetRatio.toFixed(1)}%</div>
+                  </div>
+                </div>
+              </div>
+            `
+          }).join('')}
+        </div>
+      </div>
+    `
+  }).filter(html => html).join('')
+}
+
 // 월별 차트 업데이트
 let monthlyChart = null
 
@@ -441,7 +548,20 @@ function updateMonthlyChart(transactions) {
   const expenseData = sortedMonths.map(month => monthlyData[month].expense)
   const budgetData = sortedMonths.map(month => monthlyData[month].budget)
   
-  // 차트 생성
+  // 누적 지출 및 예산 대비 계산
+  let cumulativeExpense = 0
+  const cumulativeExpenseData = expenseData.map(expense => {
+    cumulativeExpense += expense
+    return cumulativeExpense
+  })
+  
+  // 총 년간 예산 계산
+  const totalYearlyBudget = budgetData.reduce((sum, budget) => sum + budget, 0)
+  const budgetRatios = cumulativeExpenseData.map(cumulative => 
+    totalYearlyBudget > 0 ? (cumulative / totalYearlyBudget) * 100 : 0
+  )
+  
+  // 수평 바 차트 생성
   const ctx = canvas.getContext('2d')
   monthlyChart = new Chart(ctx, {
     type: 'bar',
@@ -453,43 +573,97 @@ function updateMonthlyChart(transactions) {
           data: incomeData,
           backgroundColor: 'rgba(34, 197, 94, 0.8)',
           borderColor: 'rgba(34, 197, 94, 1)',
-          borderWidth: 1
+          borderWidth: 1,
+          yAxisID: 'y'
         },
         {
           label: '지출',
           data: expenseData,
           backgroundColor: 'rgba(239, 68, 68, 0.8)',
           borderColor: 'rgba(239, 68, 68, 1)',
-          borderWidth: 1
+          borderWidth: 1,
+          yAxisID: 'y'
         },
         {
-          label: '예산',
-          data: budgetData,
-          backgroundColor: 'rgba(59, 130, 246, 0.8)',
-          borderColor: 'rgba(59, 130, 246, 1)',
-          borderWidth: 1
+          label: '누적 지출',
+          data: cumulativeExpenseData,
+          backgroundColor: 'rgba(251, 146, 60, 0.8)',
+          borderColor: 'rgba(251, 146, 60, 1)',
+          borderWidth: 1,
+          yAxisID: 'y'
+        },
+        {
+          label: '년간예산 대비 (%)',
+          data: budgetRatios,
+          type: 'line',
+          backgroundColor: 'rgba(99, 102, 241, 0.2)',
+          borderColor: 'rgba(99, 102, 241, 1)',
+          borderWidth: 2,
+          fill: false,
+          yAxisID: 'y1'
         }
       ]
     },
     options: {
+      indexAxis: 'y', // 수평 차트로 변경
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
       plugins: {
         legend: {
           position: 'top',
         },
         title: {
           display: true,
-          text: '월별 수입/지출/예산 현황'
+          text: '월별 수입/지출/누적지출/예산대비 현황'
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              if (context.datasetIndex === 3) {
+                return `${context.dataset.label}: ${context.parsed.x.toFixed(1)}%`
+              }
+              return `${context.dataset.label}: ₩${new Intl.NumberFormat('ko-KR').format(context.parsed.x)}`
+            }
+          }
         }
       },
       scales: {
-        y: {
-          beginAtZero: true,
+        x: {
+          type: 'linear',
+          display: true,
+          position: 'bottom',
           ticks: {
             callback: function(value) {
               return '₩' + new Intl.NumberFormat('ko-KR').format(value)
             }
+          }
+        },
+        x1: {
+          type: 'linear',
+          display: true,
+          position: 'top',
+          grid: {
+            drawOnChartArea: false,
+          },
+          ticks: {
+            callback: function(value) {
+              return value + '%'
+            }
+          }
+        },
+        y: {
+          beginAtZero: true
+        },
+        y1: {
+          type: 'linear',
+          display: false,
+          position: 'right',
+          grid: {
+            drawOnChartArea: false,
           }
         }
       }
@@ -500,43 +674,70 @@ function updateMonthlyChart(transactions) {
   updateTransactionsMonthlyChart(monthlyData, sortedMonths)
 }
 
-// 실시간 회계 현황의 월별 차트 업데이트 (간단한 HTML 차트)
+// 실시간 회계 현황의 월별 차트 업데이트 (수평 HTML 차트)
 function updateTransactionsMonthlyChart(monthlyData, sortedMonths) {
   const container = document.getElementById('transactions-monthly-chart')
   if (!container || sortedMonths.length === 0) return
   
+  // 누적 지출 및 예산 대비 계산
+  let cumulativeExpense = 0
+  const totalYearlyBudget = sortedMonths.reduce((sum, month) => sum + monthlyData[month].budget, 0)
+  
   const maxValue = Math.max(...sortedMonths.map(month => 
-    Math.max(monthlyData[month].income, monthlyData[month].expense, monthlyData[month].budget)
+    Math.max(monthlyData[month].income, monthlyData[month].expense)
   ))
   
   container.innerHTML = sortedMonths.map(month => {
     const data = monthlyData[month]
+    cumulativeExpense += data.expense
+    const budgetRatio = totalYearlyBudget > 0 ? (cumulativeExpense / totalYearlyBudget) * 100 : 0
     const [year, monthNum] = month.split('-')
     const label = `${monthNum}월`
     
     return `
-      <div class="flex items-end justify-between mb-4 p-3 bg-gray-50 rounded-lg">
-        <div class="flex-1">
-          <div class="text-sm font-medium text-gray-700 mb-2">${label}</div>
-          <div class="flex space-x-2">
-            <div class="flex flex-col items-center">
-              <div class="w-8 bg-green-500 rounded-t" style="height: ${Math.max(1, (data.income / maxValue) * 60)}px"></div>
-              <span class="text-xs text-green-600 mt-1">수입</span>
-            </div>
-            <div class="flex flex-col items-center">
-              <div class="w-8 bg-red-500 rounded-t" style="height: ${Math.max(1, (data.expense / maxValue) * 60)}px"></div>
-              <span class="text-xs text-red-600 mt-1">지출</span>
-            </div>
-            <div class="flex flex-col items-center">
-              <div class="w-8 bg-blue-500 rounded-t" style="height: ${Math.max(1, (data.budget / maxValue) * 60)}px"></div>
-              <span class="text-xs text-blue-600 mt-1">예산</span>
-            </div>
-          </div>
+      <div class="mb-3 p-3 bg-gray-50 rounded-lg">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-gray-700">${label}</span>
+          <span class="text-xs text-gray-600">예산대비: ${budgetRatio.toFixed(1)}%</span>
         </div>
-        <div class="text-right text-xs text-gray-600 ml-3">
-          <div>수입: ₩${new Intl.NumberFormat('ko-KR').format(data.income)}</div>
-          <div>지출: ₩${new Intl.NumberFormat('ko-KR').format(data.expense)}</div>
-          <div>예산: ₩${new Intl.NumberFormat('ko-KR').format(data.budget)}</div>
+        
+        <!-- 수평 바 차트 -->
+        <div class="space-y-2">
+          <!-- 수입 -->
+          <div class="flex items-center">
+            <span class="w-12 text-xs text-green-600">수입</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-4 ml-2 relative">
+              <div class="bg-green-500 h-4 rounded-full" style="width: ${maxValue > 0 ? Math.max(2, (data.income / maxValue) * 100) : 0}%"></div>
+            </div>
+            <span class="w-20 text-xs text-gray-600 ml-2">₩${new Intl.NumberFormat('ko-KR').format(data.income)}</span>
+          </div>
+          
+          <!-- 지출 -->
+          <div class="flex items-center">
+            <span class="w-12 text-xs text-red-600">지출</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-4 ml-2 relative">
+              <div class="bg-red-500 h-4 rounded-full" style="width: ${maxValue > 0 ? Math.max(2, (data.expense / maxValue) * 100) : 0}%"></div>
+            </div>
+            <span class="w-20 text-xs text-gray-600 ml-2">₩${new Intl.NumberFormat('ko-KR').format(data.expense)}</span>
+          </div>
+          
+          <!-- 누적 지출 -->
+          <div class="flex items-center">
+            <span class="w-12 text-xs text-orange-600">누적</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-4 ml-2 relative">
+              <div class="bg-orange-500 h-4 rounded-full" style="width: ${maxValue > 0 ? Math.max(2, (cumulativeExpense / (maxValue * sortedMonths.length)) * 100) : 0}%"></div>
+            </div>
+            <span class="w-20 text-xs text-gray-600 ml-2">₩${new Intl.NumberFormat('ko-KR').format(cumulativeExpense)}</span>
+          </div>
+          
+          <!-- 년간예산 -->
+          <div class="flex items-center">
+            <span class="w-12 text-xs text-blue-600">예산</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-4 ml-2 relative">
+              <div class="bg-blue-500 h-4 rounded-full" style="width: ${totalYearlyBudget > 0 ? Math.max(2, (data.budget / (totalYearlyBudget / sortedMonths.length)) * 100) : 0}%"></div>
+            </div>
+            <span class="w-20 text-xs text-gray-600 ml-2">₩${new Intl.NumberFormat('ko-KR').format(totalYearlyBudget)}</span>
+          </div>
         </div>
       </div>
     `
@@ -572,7 +773,7 @@ function renderReports(transactions) {
 function renderRecentTransactions(transactions) {
   const recent = transactions
     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
-    .slice(0, 10)
+    .slice(0, 5)
   
   const tbody = document.getElementById('recent-transactions-table')
   if (!tbody) return
@@ -639,7 +840,15 @@ function convertToCSV(data, headers) {
 }
 
 function downloadFile(fileName, content, mimeType) {
-  const blob = new Blob([content], { type: mimeType })
+  let fileContent = content
+  
+  // CSV 파일에 UTF-8 BOM 추가 (한글 지원)
+  if (mimeType && mimeType.includes('csv')) {
+    const BOM = '\uFEFF' // UTF-8 BOM (Byte Order Mark)
+    fileContent = BOM + content
+  }
+  
+  const blob = new Blob([fileContent], { type: mimeType + ';charset=utf-8' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
   link.download = fileName
@@ -1387,6 +1596,94 @@ function exportDateRangeCSV(startDate, endDate) {
   showMessage(`CSV 출력 완료: ${fileName}
   기간: ${periodInfo}
   총 ${transactions.length}건 | 수입: ₩${new Intl.NumberFormat('ko-KR').format(totalIncome)} | 지출: ₩${new Intl.NumberFormat('ko-KR').format(totalExpense)} | 예산: ₩${new Intl.NumberFormat('ko-KR').format(totalBudget)}`, 'success')
+}
+
+// 테이블 정렬 시스템
+let currentSort = { column: 'date', direction: 'desc' }
+
+function sortTransactions(column) {
+  console.log('🔀 테이블 정렬:', column)
+  
+  // 정렬 방향 결정
+  if (currentSort.column === column) {
+    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc'
+  } else {
+    currentSort.column = column
+    currentSort.direction = 'desc'
+  }
+  
+  // 아이콘 업데이트
+  updateSortIcons()
+  
+  // 테이블 다시 렌더링
+  loadTransactionsList()
+}
+
+function updateSortIcons() {
+  // 모든 아이콘 초기화
+  const columns = ['date', 'type', 'department', 'item', 'amount', 'manager', 'memo']
+  columns.forEach(col => {
+    const icon = document.getElementById(`sort-${col}-icon`)
+    if (icon) {
+      icon.className = 'fas fa-sort ml-1'
+    }
+  })
+  
+  // 현재 정렬 컬럼 아이콘 업데이트
+  const activeIcon = document.getElementById(`sort-${currentSort.column}-icon`)
+  if (activeIcon) {
+    activeIcon.className = `fas fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'} ml-1`
+  }
+}
+
+function getSortedTransactions(transactions) {
+  if (!transactions || transactions.length === 0) return []
+  
+  return [...transactions].sort((a, b) => {
+    let valueA, valueB
+    
+    switch (currentSort.column) {
+      case 'date':
+        valueA = new Date(a.date || 0)
+        valueB = new Date(b.date || 0)
+        break
+      case 'amount':
+        valueA = parseFloat(a.amount || 0)
+        valueB = parseFloat(b.amount || 0)
+        break
+      case 'type':
+        valueA = a.type || ''
+        valueB = b.type || ''
+        break
+      case 'department':
+        valueA = a.department || ''
+        valueB = b.department || ''
+        break
+      case 'item':
+        valueA = a.item || ''
+        valueB = b.item || ''
+        break
+      case 'manager':
+        valueA = a.manager || ''
+        valueB = b.manager || ''
+        break
+      case 'memo':
+        valueA = a.memo || ''
+        valueB = b.memo || ''
+        break
+      default:
+        valueA = a.date || 0
+        valueB = b.date || 0
+    }
+    
+    // 정렬 비교
+    let result = 0
+    if (valueA < valueB) result = -1
+    else if (valueA > valueB) result = 1
+    
+    // 정렬 방향 적용
+    return currentSort.direction === 'asc' ? result : -result
+  })
 }
 
 // DOM 로드 후 초기화

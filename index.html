@@ -398,16 +398,26 @@
                   <thead class="bg-gray-50">
                     <tr>
                       <th class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('date')">
-                        날짜 <i id="sort-date-icon" class="fas fa-sort ml-1"></i>
+                        날짜 <i id="sort-date-icon" class="fas fa-sort-down ml-1"></i>
                       </th>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">구분</th>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">부서</th>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">항목</th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('type')">
+                        구분 <i id="sort-type-icon" class="fas fa-sort ml-1"></i>
+                      </th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('department')">
+                        부서 <i id="sort-department-icon" class="fas fa-sort ml-1"></i>
+                      </th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('item')">
+                        항목 <i id="sort-item-icon" class="fas fa-sort ml-1"></i>
+                      </th>
                       <th class="px-4 py-3 text-right font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('amount')">
                         금액 <i id="sort-amount-icon" class="fas fa-sort ml-1"></i>
                       </th>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">담당자</th>
-                      <th class="px-4 py-3 text-left font-semibold text-gray-700">적요</th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('manager')">
+                        담당자 <i id="sort-manager-icon" class="fas fa-sort ml-1"></i>
+                      </th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('memo')">
+                        적요 <i id="sort-memo-icon" class="fas fa-sort ml-1"></i>
+                      </th>
                       <th class="px-4 py-3 text-center font-semibold text-gray-700">작업</th>
                     </tr>
                   </thead>
@@ -601,7 +611,7 @@
             </div>
             
             <!-- 부서별 통계 -->
-            <div class="grid lg:grid-cols-2 gap-6">
+            <div class="space-y-6">
               <!-- 부서별 요약 테이블 -->
               <div class="bg-white rounded-xl p-4 border border-gray-200">
                 <h3 class="text-lg font-semibold mb-4 text-gray-800">
@@ -621,6 +631,16 @@
                       <!-- 부서별 데이터가 여기에 동적으로 추가됩니다 -->
                     </tbody>
                   </table>
+                </div>
+              </div>
+              
+              <!-- 부서별 월별 현황 차트 -->
+              <div class="bg-white rounded-xl p-4 border border-gray-200">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">
+                  <i class="fas fa-chart-area mr-2"></i>부서별 월별 현황
+                </h3>
+                <div class="space-y-4" id="department-monthly-charts">
+                  <!-- 부서별 월별 차트가 여기에 동적으로 추가됩니다 -->
                 </div>
               </div>
               
