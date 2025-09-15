@@ -288,12 +288,31 @@ function updateDashboard(startDate = null, endDate = null) {
   
   const totalIncome = transactions.filter(t => t.type === '수입').reduce((sum, t) => sum + (t.amount || 0), 0)
   const totalExpense = transactions.filter(t => t.type === '지출').reduce((sum, t) => sum + (t.amount || 0), 0)
+  const totalBudget = transactions.filter(t => t.type === '예산').reduce((sum, t) => sum + (t.amount || 0), 0)
   const balance = totalIncome - totalExpense
+  
+  // 누적 지출 및 예산 대비 비율 계산
+  const expenseRatio = totalBudget > 0 ? (totalExpense / totalBudget) * 100 : 0
   
   // 대시보드 카드 업데이트
   updateElement('total-income', `₩ ${new Intl.NumberFormat('ko-KR').format(totalIncome)}`)
   updateElement('total-expense', `₩ ${new Intl.NumberFormat('ko-KR').format(totalExpense)}`)
   updateElement('transaction-count', `${transactions.length}건`)
+  
+  // 누적 지출 카드 업데이트
+  const cumulativeExpenseEl = document.getElementById('cumulative-expense')
+  if (cumulativeExpenseEl) {
+    const displayText = `₩ ${new Intl.NumberFormat('ko-KR').format(totalExpense)} (${expenseRatio.toFixed(1)}%)`
+    cumulativeExpenseEl.textContent = displayText
+    // 예산 대비 지출 비율에 따른 색상 변경
+    if (expenseRatio > 90) {
+      cumulativeExpenseEl.className = 'text-2xl font-bold text-red-700'
+    } else if (expenseRatio > 75) {
+      cumulativeExpenseEl.className = 'text-2xl font-bold text-yellow-700'
+    } else {
+      cumulativeExpenseEl.className = 'text-2xl font-bold text-orange-700'
+    }
+  }
   
   const balanceEl = document.getElementById('balance')
   if (balanceEl) {
@@ -599,6 +618,8 @@ function updateMonthlyChart(transactions) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      categoryPercentage: 0.8, // 카테고리 간 간격 조정 (높을수록 넓은 바)
+      barPercentage: 0.9, // 바 자체의 넓이 조정 (높을수록 넓은 바)
       plugins: {
         legend: {
           position: 'top',
@@ -616,6 +637,10 @@ function updateMonthlyChart(transactions) {
               return '₩' + new Intl.NumberFormat('ko-KR').format(value)
             }
           }
+        },
+        x: {
+          categoryPercentage: 0.8,
+          barPercentage: 0.9
         }
       }
     }
