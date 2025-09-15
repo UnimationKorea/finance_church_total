@@ -306,18 +306,18 @@ function updateDashboard(startDate = null, endDate = null) {
     cumulativeExpenseEl.textContent = displayText
     // 예산 대비 지출 비율에 따른 색상 변경
     if (expenseRatio > 90) {
-      cumulativeExpenseEl.className = 'text-2xl font-bold text-red-700'
+      cumulativeExpenseEl.className = 'text-xl font-bold text-red-700'
     } else if (expenseRatio > 75) {
-      cumulativeExpenseEl.className = 'text-2xl font-bold text-yellow-700'
+      cumulativeExpenseEl.className = 'text-xl font-bold text-yellow-700'
     } else {
-      cumulativeExpenseEl.className = 'text-2xl font-bold text-orange-700'
+      cumulativeExpenseEl.className = 'text-xl font-bold text-orange-700'
     }
   }
   
   const balanceEl = document.getElementById('balance')
   if (balanceEl) {
     balanceEl.textContent = `₩ ${new Intl.NumberFormat('ko-KR').format(balance)}`
-    balanceEl.className = 'text-2xl font-bold ' + (balance >= 0 ? 'text-purple-700' : 'text-red-700')
+    balanceEl.className = 'text-xl font-bold ' + (balance >= 0 ? 'text-purple-700' : 'text-red-700')
   }
   
   // 기간 표시 업데이트

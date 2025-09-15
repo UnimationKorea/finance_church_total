@@ -223,51 +223,51 @@
 
           <div class="grid lg:grid-cols-5 gap-6 mb-8">
             <!-- Summary Cards -->
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm font-medium text-blue-600">총 수입</p>
-                  <p id="total-income" class="text-2xl font-bold text-blue-700">₩ 0</p>
+                  <p id="total-income" class="text-xl font-bold text-blue-700">₩ 0</p>
                 </div>
                 <i class="fas fa-arrow-up text-blue-500 text-2xl"></i>
               </div>
             </div>
             
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm font-medium text-red-600">총 지출</p>
-                  <p id="total-expense" class="text-2xl font-bold text-red-700">₩ 0</p>
+                  <p id="total-expense" class="text-xl font-bold text-red-700">₩ 0</p>
                 </div>
                 <i class="fas fa-arrow-down text-red-500 text-2xl"></i>
               </div>
             </div>
             
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm font-medium text-purple-600">현재 잔액</p>
-                  <p id="balance" class="text-2xl font-bold text-purple-700">₩ 0</p>
+                  <p id="balance" class="text-xl font-bold text-purple-700">₩ 0</p>
                 </div>
                 <i class="fas fa-wallet text-purple-500 text-2xl"></i>
               </div>
             </div>
             
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm font-medium text-orange-600">누적지출 (%: 예산대비)</p>
-                  <p id="cumulative-expense" class="text-2xl font-bold text-orange-700">₩ 0</p>
+                  <p id="cumulative-expense" class="text-xl font-bold text-orange-700">₩ 0</p>
                 </div>
                 <i class="fas fa-chart-line text-orange-500 text-2xl"></i>
               </div>
             </div>
             
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm font-medium text-green-600">거래 건수</p>
-                  <p id="transaction-count" class="text-2xl font-bold text-green-700">0건</p>
+                  <p id="transaction-count" class="text-xl font-bold text-green-700">0건</p>
                 </div>
                 <i class="fas fa-receipt text-green-500 text-2xl"></i>
               </div>
@@ -293,7 +293,7 @@
         <div id="content-transactions" class="tab-content hidden">
           <div class="space-y-6">
             <!-- 거래 추가 섹션 -->
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <h2 class="text-xl font-bold mb-6 text-blue-800">
                 <i class="fas fa-plus-circle mr-2"></i>새 거래 추가
               </h2>
@@ -355,7 +355,7 @@
             </div>
             
             <!-- 거래 목록 섹션 -->
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
                 <h2 class="text-xl font-bold text-blue-800">
                   <i class="fas fa-list mr-2"></i>거래 내역
@@ -446,7 +446,7 @@
             </div>
             
             <!-- 파일 관리 섹션 -->
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
                 <h2 class="text-xl font-bold text-blue-800">
                   <i class="fas fa-file-import mr-2"></i>파일 관리
@@ -610,44 +610,16 @@
               </div>
             </div>
             
-            <!-- 월별 통계 차트 -->
-            <div class="bg-white rounded-xl p-4 border border-gray-200 mb-6">
-              <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                <i class="fas fa-chart-bar mr-2"></i>월별 수입/지출 현황
-              </h3>
-              <div class="relative h-64">
-                <div id="transactions-monthly-chart" class="h-full overflow-y-auto"></div>
-              </div>
-            </div>
+
             
             <!-- 부서별 통계 -->
             <div class="space-y-6">
-              <!-- 부서별 요약 테이블 -->
-              <div class="bg-white rounded-xl p-4 border border-gray-200">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                  <i class="fas fa-building mr-2"></i>부서별 현황
-                </h3>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-sm">
-                    <thead class="bg-gray-50">
-                      <tr>
-                        <th class="px-3 py-2 text-left font-semibold text-gray-700">부서</th>
-                        <th class="px-3 py-2 text-right font-semibold text-gray-700">수입</th>
-                        <th class="px-3 py-2 text-right font-semibold text-gray-700">지출</th>
-                        <th class="px-3 py-2 text-right font-semibold text-gray-700">잔액</th>
-                      </tr>
-                    </thead>
-                    <tbody id="transactions-dept-summary" class="bg-white divide-y divide-gray-200">
-                      <!-- 부서별 데이터가 여기에 동적으로 추가됩니다 -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+
               
-              <!-- 부서별 월별 현황 차트 -->
+              <!-- 누적 수입 및 지출 차트 -->
               <div class="bg-white rounded-xl p-4 border border-gray-200">
                 <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                  <i class="fas fa-chart-area mr-2"></i>부서별 월별 현황
+                  <i class="fas fa-chart-area mr-2"></i>누적 수입 및 지출
                 </h3>
                 <div class="space-y-4" id="department-monthly-charts">
                   <!-- 부서별 월별 차트가 여기에 동적으로 추가됩니다 -->
@@ -686,7 +658,7 @@
         <div id="content-reports" class="tab-content hidden">
           <div class="space-y-6">
             <!-- 보고서 요약 섹션 -->
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <h2 class="text-xl font-bold mb-6 text-blue-800">
                 <i class="fas fa-chart-pie mr-2"></i>재정 보고서
               </h2>
@@ -736,7 +708,7 @@
             </div>
             
             <!-- 부서별 요약 -->
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <h3 class="text-lg font-bold mb-4 text-blue-800">
                 <i class="fas fa-building mr-2"></i>부서별 요약
               </h3>
@@ -760,7 +732,7 @@
             </div>
             
             <!-- 최근 거래 내역 -->
-            <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="glass rounded-2xl p-4 shadow-xl">
               <h3 class="text-lg font-bold mb-4 text-blue-800">
                 <i class="fas fa-clock mr-2"></i>최근 거래 내역 (최근 10건)
               </h3>
