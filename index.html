@@ -1,0 +1,755 @@
+
+<!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>새순 교육부 통합 관리 시스템</title>
+      <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⛪%3C/text%3E%3C/svg%3E">
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+      <link rel="stylesheet" href="static/css/style.css">
+    </head>
+    <body class="min-h-screen">
+      <!-- Loading Indicator -->
+      <div id="loading" class="loading fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-3">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span class="text-lg font-medium">처리 중...</span>
+        </div>
+      </div>
+
+      <!-- 부서 선택 페이지 -->
+      <div id="department-selection" class="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 z-40">
+        <div class="min-h-screen flex items-center justify-center p-4">
+          <div class="glass rounded-3xl p-8 shadow-2xl max-w-2xl w-full">
+            <!-- 헤더 -->
+            <div class="text-center mb-8">
+              <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-church text-white text-3xl"></i>
+              </div>
+              <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                새순 교육부 통합 관리 시스템
+              </h1>
+              <p class="text-lg text-gray-600 font-medium">관리하실 부서를 선택해주세요</p>
+            </div>
+            
+            <!-- 부서 선택 버튼들 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <button class="department-btn bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white p-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105" data-department="유아부">
+                <div class="flex items-center justify-center space-x-3">
+                  <i class="fas fa-baby text-2xl"></i>
+                  <span class="text-xl font-bold">유아부</span>
+                </div>
+                <div class="text-sm mt-2 opacity-90">0-3세 유아 교육</div>
+              </button>
+              
+              <button class="department-btn bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white p-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105" data-department="유치부">
+                <div class="flex items-center justify-center space-x-3">
+                  <i class="fas fa-child text-2xl"></i>
+                  <span class="text-xl font-bold">유치부</span>
+                </div>
+                <div class="text-sm mt-2 opacity-90">4-6세 유치 교육</div>
+              </button>
+              
+              <button class="department-btn bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white p-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105" data-department="유년부">
+                <div class="flex items-center justify-center space-x-3">
+                  <i class="fas fa-seedling text-2xl"></i>
+                  <span class="text-xl font-bold">유년부</span>
+                </div>
+                <div class="text-sm mt-2 opacity-90">초등학교 저학년</div>
+              </button>
+              
+              <button class="department-btn bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white p-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105" data-department="초등부">
+                <div class="flex items-center justify-center space-x-3">
+                  <i class="fas fa-graduation-cap text-2xl"></i>
+                  <span class="text-xl font-bold">초등부</span>
+                </div>
+                <div class="text-sm mt-2 opacity-90">초등학교 고학년</div>
+              </button>
+              
+              <button class="department-btn bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white p-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105" data-department="중등부">
+                <div class="flex items-center justify-center space-x-3">
+                  <i class="fas fa-book-open text-2xl"></i>
+                  <span class="text-xl font-bold">중등부</span>
+                </div>
+                <div class="text-sm mt-2 opacity-90">중학생 교육</div>
+              </button>
+              
+              <button class="department-btn bg-gradient-to-r from-indigo-400 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white p-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105" data-department="고등부">
+                <div class="flex items-center justify-center space-x-3">
+                  <i class="fas fa-user-graduate text-2xl"></i>
+                  <span class="text-xl font-bold">고등부</span>
+                </div>
+                <div class="text-sm mt-2 opacity-90">고등학생 교육</div>
+              </button>
+              
+              <button class="department-btn bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white p-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 md:col-span-2" data-department="영어예배부">
+                <div class="flex items-center justify-center space-x-3">
+                  <i class="fas fa-globe text-2xl"></i>
+                  <span class="text-xl font-bold">영어예배부</span>
+                </div>
+                <div class="text-sm mt-2 opacity-90">영어 예배 및 교육</div>
+              </button>
+            </div>
+            
+            <!-- 하단 안내 -->
+            <div class="text-center text-sm text-gray-500">
+              <i class="fas fa-info-circle mr-1"></i>
+              선택한 부서의 데이터만 관리하게 됩니다
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="main-content" class="container mx-auto p-4 max-w-7xl hidden">
+        <!-- Header -->
+        <header class="glass rounded-2xl p-6 mb-8 shadow-xl">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-church text-white text-xl"></i>
+              </div>
+              <div>
+                <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  새순 교육부 통합 관리 시스템
+                </h1>
+                <p class="text-sm text-gray-600">부서별 회계·사역·기도제목 관리</p>
+              </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3">
+              <div class="px-4 py-2 rounded-xl border border-gray-200 bg-white shadow-sm text-sm font-medium flex items-center">
+                <i class="fas fa-building mr-2 text-blue-600"></i>
+                <span id="current-department" class="font-semibold">부서 선택됨</span>
+              </div>
+              
+              <button id="change-department" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-xl shadow-sm transition-colors text-sm font-medium flex items-center">
+                <i class="fas fa-exchange-alt mr-2"></i>
+                부서 변경
+              </button>
+              
+              <button id="sync-btn" class="no-print px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-sm transition-colors text-sm font-medium flex items-center space-x-2">
+                <i class="fas fa-database"></i>
+                <span>백업 생성</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="glass rounded-2xl p-2 mb-8 shadow-xl">
+          <div class="flex flex-wrap gap-2">
+            <button class="tab-btn active px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2" data-tab="dashboard">
+              <i class="fas fa-tachometer-alt"></i>
+              <span>대시보드</span>
+            </button>
+            <button class="tab-btn px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2" data-tab="transactions">
+              <i class="fas fa-coins"></i>
+              <span>회계관리</span>
+            </button>
+            <button class="tab-btn px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2" data-tab="ministries">
+              <i class="fas fa-hands-praying"></i>
+              <span>사역관리</span>
+            </button>
+            <button class="tab-btn px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2" data-tab="prayers">
+              <i class="fas fa-pray"></i>
+              <span>기도제목</span>
+            </button>
+            <button class="tab-btn px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2" data-tab="reports">
+              <i class="fas fa-chart-pie"></i>
+              <span>보고서</span>
+            </button>
+          </div>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="content-dashboard" class="tab-content">
+          <!-- Date Range Selector -->
+          <div class="glass rounded-2xl p-6 shadow-xl mb-8">
+            <h3 class="text-lg font-bold mb-4 text-gray-800">
+              <i class="fas fa-calendar-alt mr-2"></i>조회 기간 설정
+            </h3>
+            
+            <!-- Date Input Fields -->
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+              <div class="flex-1">
+                <label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">시작일</label>
+                <input type="date" id="start-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div class="flex-1">
+                <label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">종료일</label>
+                <input type="date" id="end-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div class="flex items-end">
+                <button id="apply-date-range" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
+                  <i class="fas fa-search mr-2"></i>조회
+                </button>
+              </div>
+            </div>
+            
+            <!-- Quick Date Buttons -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button class="quick-date-btn px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium" data-period="1month">
+                <i class="fas fa-calendar-week mr-2"></i>이번 달
+              </button>
+              <button class="quick-date-btn px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium" data-period="3months">
+                <i class="fas fa-calendar mr-2"></i>분기별 (3개월)
+              </button>
+              <button class="quick-date-btn px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium" data-period="6months">
+                <i class="fas fa-calendar-plus mr-2"></i>반년 (6개월)
+              </button>
+              <button class="quick-date-btn px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium" data-period="1year">
+                <i class="fas fa-calendar-year mr-2"></i>올해 (1년)
+              </button>
+            </div>
+            
+            <!-- Current Period Display -->
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p class="text-sm text-blue-800">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span class="font-medium">현재 조회 기간:</span>
+                <span id="current-period-display">전체 기간</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-4 gap-6 mb-8">
+            <!-- Summary Cards -->
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-blue-600">총 수입</p>
+                  <p id="total-income" class="text-2xl font-bold text-blue-700">₩ 0</p>
+                </div>
+                <i class="fas fa-arrow-up text-blue-500 text-2xl"></i>
+              </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-red-600">총 지출</p>
+                  <p id="total-expense" class="text-2xl font-bold text-red-700">₩ 0</p>
+                </div>
+                <i class="fas fa-arrow-down text-red-500 text-2xl"></i>
+              </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-purple-600">현재 잔액</p>
+                  <p id="balance" class="text-2xl font-bold text-purple-700">₩ 0</p>
+                </div>
+                <i class="fas fa-wallet text-purple-500 text-2xl"></i>
+              </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-green-600">거래 건수</p>
+                  <p id="transaction-count" class="text-2xl font-bold text-green-700">0건</p>
+                </div>
+                <i class="fas fa-receipt text-green-500 text-2xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Section -->
+          <div class="glass rounded-2xl p-6 shadow-xl mb-8">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-bold">수입/지출 현황</h3>
+              <div class="flex items-center space-x-2 text-sm text-gray-600">
+                <i class="fas fa-chart-line"></i>
+                <span id="chart-period-info">전체 기간</span>
+              </div>
+            </div>
+            <div class="relative h-80">
+              <canvas id="monthly-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other tabs will be dynamically loaded -->
+        <div id="content-transactions" class="tab-content hidden">
+          <div class="space-y-6">
+            <!-- 거래 추가 섹션 -->
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <h2 class="text-xl font-bold mb-6 text-blue-800">
+                <i class="fas fa-plus-circle mr-2"></i>새 거래 추가
+              </h2>
+              
+              <form id="transaction-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">날짜</label>
+                  <input type="date" id="transaction-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">구분</label>
+                  <select id="transaction-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="">선택하세요</option>
+                    <option value="수입">수입</option>
+                    <option value="지출">지출</option>
+                    <option value="예산">예산</option>
+                  </select>
+                </div>
+                
+
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">항목</label>
+                  <input type="text" id="transaction-item" placeholder="헌금, 후원금, 교재비 등" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">금액</label>
+                  <input type="number" id="transaction-amount" placeholder="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">담당자</label>
+                  <input type="text" id="transaction-manager" placeholder="담당자명" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="md:col-span-2 lg:col-span-3">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                  <textarea id="transaction-description" rows="2" placeholder="상세 설명 (선택사항)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div class="md:col-span-2 lg:col-span-3 flex space-x-3">
+                  <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-save mr-2"></i>저장
+                  </button>
+                  <button type="button" id="clear-transaction-form" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-broom mr-2"></i>초기화
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- 거래 목록 섹션 -->
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                <h2 class="text-xl font-bold text-blue-800">
+                  <i class="fas fa-list mr-2"></i>거래 내역
+                </h2>
+                
+                <!-- 필터 및 검색 -->
+                <div class="flex flex-wrap items-center space-x-3">
+                  <select id="filter-transaction-type" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">전체 구분</option>
+                    <option value="수입">수입</option>
+                    <option value="지출">지출</option>
+                    <option value="예산">예산</option>
+                  </select>
+                  
+                  <input type="text" id="search-transactions" placeholder="검색..." class="px-3 py-2 border border-gray-300 rounded-lg text-sm w-32">
+                  
+                  <button id="refresh-transactions" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-refresh mr-1"></i>새로고침
+                  </button>
+                  
+                  <button id="delete-all-transactions" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-trash-alt mr-1"></i>전체 삭제
+                  </button>
+                </div>
+              </div>
+              
+              <!-- 거래 통계 요약 -->
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div class="text-sm text-green-600 font-medium">총 수입</div>
+                  <div class="text-lg font-bold text-green-700" id="transactions-total-income">0원</div>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div class="text-sm text-red-600 font-medium">총 지출</div>
+                  <div class="text-lg font-bold text-red-700" id="transactions-total-expense">0원</div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div class="text-sm text-blue-600 font-medium">예산</div>
+                  <div class="text-lg font-bold text-blue-700" id="transactions-total-budget">0원</div>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div class="text-sm text-gray-600 font-medium">잔액</div>
+                  <div class="text-lg font-bold" id="transactions-balance">0원</div>
+                </div>
+              </div>
+              
+              <!-- 거래 목록 테이블 -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('date')">
+                        날짜 <i id="sort-date-icon" class="fas fa-sort ml-1"></i>
+                      </th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">구분</th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">부서</th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">항목</th>
+                      <th class="px-4 py-3 text-right font-semibold text-gray-700 cursor-pointer hover:bg-gray-100" onclick="sortTransactions('amount')">
+                        금액 <i id="sort-amount-icon" class="fas fa-sort ml-1"></i>
+                      </th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">담당자</th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-700">작업</th>
+                    </tr>
+                  </thead>
+                  <tbody id="transactions-table-body" class="bg-white divide-y divide-gray-200">
+                    <!-- 거래 목록이 여기에 동적으로 추가됩니다 -->
+                  </tbody>
+                </table>
+                
+                <!-- 데이터 없음 메시지 -->
+                <div id="no-transactions-message" class="text-center py-8 text-gray-500 hidden">
+                  <i class="fas fa-inbox text-4xl mb-3"></i>
+                  <p>등록된 거래가 없습니다.</p>
+                  <p class="text-sm">위의 폼을 사용해서 첫 번째 거래를 추가해보세요.</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 파일 관리 섹션 -->
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+                <h2 class="text-xl font-bold text-blue-800">
+                  <i class="fas fa-file-import mr-2"></i>파일 관리
+                </h2>
+              </div>
+              
+              <div class="grid lg:grid-cols-2 gap-6">
+                <!-- 파일 다운로드 섹션 -->
+                <div class="bg-white rounded-xl p-4 border border-gray-200">
+                  <h3 class="text-lg font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-download mr-2"></i>데이터 다운로드
+                  </h3>
+                  
+                  <div class="space-y-3">
+                    <!-- JSON 백업 다운로드 -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <h4 class="font-medium mb-2 text-gray-800">JSON 전체 백업</h4>
+                      <p class="text-sm text-gray-600 mb-3">모든 데이터를 포함한 완전한 백업 파일</p>
+                      <button id="download-json-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                        <i class="fas fa-file-code mr-2"></i>JSON 파일 다운로드
+                      </button>
+                    </div>
+                    
+                    <!-- CSV 다운로드 -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <h4 class="font-medium mb-2 text-gray-800">CSV 데이터 다운로드</h4>
+                      <p class="text-sm text-gray-600 mb-3">Excel에서 열 수 있는 CSV 형식</p>
+                      <div class="grid grid-cols-3 gap-2">
+                        <button id="download-csv-transactions" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                          <i class="fas fa-coins mr-1"></i>거래
+                        </button>
+                        <button id="download-csv-ministries" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                          <i class="fas fa-hands-praying mr-1"></i>사역
+                        </button>
+                        <button id="download-csv-prayers" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                          <i class="fas fa-pray mr-1"></i>기도제목
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- 오프라인 백업 -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <h4 class="font-medium mb-2 text-gray-800">오프라인 백업 생성</h4>
+                      <p class="text-sm text-gray-600 mb-3">외부 연결 없이 로컬 백업 생성</p>
+                      <button id="create-offline-backup-btn" class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                        <i class="fas fa-save mr-2"></i>오프라인 백업 생성
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 파일 업로드 섹션 -->
+                <div class="bg-white rounded-xl p-4 border border-gray-200">
+                  <h3 class="text-lg font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-upload mr-2"></i>데이터 업로드
+                  </h3>
+                  
+                  <div class="space-y-3">
+                    <!-- JSON 파일 업로드 -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <h4 class="font-medium mb-2 text-gray-800">JSON 백업 복원</h4>
+                      <p class="text-sm text-gray-600 mb-3">전체 데이터 백업 파일을 업로드하여 복원</p>
+                      <div class="space-y-2">
+                        <input type="file" id="json-file-input" accept=".json" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <button id="upload-json-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm" disabled>
+                          <i class="fas fa-file-upload mr-2"></i>JSON 파일 복원
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- CSV 파일 업로드 -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <h4 class="font-medium mb-2 text-gray-800">CSV 파일 가져오기</h4>
+                      <p class="text-sm text-gray-600 mb-3">Excel에서 편집한 CSV 파일을 가져오기</p>
+                      <div class="space-y-2">
+                        <select id="csv-data-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                          <option value="transactions">거래 데이터</option>
+                          <option value="ministries">사역 데이터</option>
+                          <option value="prayers">기도제목 데이터</option>
+                        </select>
+                        <input type="file" id="csv-file-input" accept=".csv" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <button id="upload-csv-btn" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors text-sm" disabled>
+                          <i class="fas fa-file-csv mr-2"></i>CSV 파일 가져오기
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- 업로드 상태 -->
+                    <div id="upload-status" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div class="flex items-center justify-center space-x-2">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span class="text-sm text-gray-600">파일을 처리하고 있습니다...</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 파일 처리 결과 -->
+              <div id="file-result" class="hidden mt-4">
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                  <h4 class="text-md font-semibold mb-2">처리 결과</h4>
+                  <div id="file-result-content" class="bg-gray-50 rounded-lg p-3 text-sm"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 회계관리 대시보드 섹션 -->
+          <div class="glass rounded-2xl p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-bold text-blue-800">
+                <i class="fas fa-chart-line mr-2"></i>실시간 회계 현황
+              </h2>
+              <div class="text-sm text-gray-600">
+                <i class="fas fa-sync-alt mr-1"></i>
+                <span id="transactions-last-updated">방금 전 업데이트</span>
+              </div>
+            </div>
+            
+            <!-- 실시간 통계 카드들 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-green-600 font-medium">총 수입</div>
+                    <div class="text-2xl font-bold text-green-700" id="transactions-dashboard-income">₩ 0</div>
+                  </div>
+                  <i class="fas fa-arrow-up text-green-500 text-xl"></i>
+                </div>
+              </div>
+              
+              <div class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-red-600 font-medium">총 지출</div>
+                    <div class="text-2xl font-bold text-red-700" id="transactions-dashboard-expense">₩ 0</div>
+                  </div>
+                  <i class="fas fa-arrow-down text-red-500 text-xl"></i>
+                </div>
+              </div>
+              
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-blue-600 font-medium">예산 총액</div>
+                    <div class="text-2xl font-bold text-blue-700" id="transactions-dashboard-budget">₩ 0</div>
+                  </div>
+                  <i class="fas fa-calculator text-blue-500 text-xl"></i>
+                </div>
+              </div>
+              
+              <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-purple-600 font-medium">현재 잔액</div>
+                    <div class="text-2xl font-bold" id="transactions-dashboard-balance">₩ 0</div>
+                  </div>
+                  <i class="fas fa-wallet text-purple-500 text-xl"></i>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 월별 통계 차트 -->
+            <div class="bg-white rounded-xl p-4 border border-gray-200 mb-6">
+              <h3 class="text-lg font-semibold mb-4 text-gray-800">
+                <i class="fas fa-chart-bar mr-2"></i>월별 수입/지출 현황
+              </h3>
+              <div class="relative h-64">
+                <div id="transactions-monthly-chart" class="h-full overflow-y-auto"></div>
+              </div>
+            </div>
+            
+            <!-- 부서별 통계 -->
+            <div class="grid lg:grid-cols-2 gap-6">
+              <!-- 부서별 요약 테이블 -->
+              <div class="bg-white rounded-xl p-4 border border-gray-200">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">
+                  <i class="fas fa-building mr-2"></i>부서별 현황
+                </h3>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-3 py-2 text-left font-semibold text-gray-700">부서</th>
+                        <th class="px-3 py-2 text-right font-semibold text-gray-700">수입</th>
+                        <th class="px-3 py-2 text-right font-semibold text-gray-700">지출</th>
+                        <th class="px-3 py-2 text-right font-semibold text-gray-700">잔액</th>
+                      </tr>
+                    </thead>
+                    <tbody id="transactions-dept-summary" class="bg-white divide-y divide-gray-200">
+                      <!-- 부서별 데이터가 여기에 동적으로 추가됩니다 -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <!-- 최근 거래 내역 -->
+              <div class="bg-white rounded-xl p-4 border border-gray-200">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">
+                  <i class="fas fa-clock mr-2"></i>최근 거래 (최근 5건)
+                </h3>
+                <div class="space-y-3">
+                  <div id="transactions-recent-list">
+                    <!-- 최근 거래 목록이 여기에 동적으로 추가됩니다 -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="content-ministries" class="tab-content hidden">
+          <div class="glass rounded-2xl p-6 shadow-xl">
+            <h2 class="text-xl font-bold mb-6">사역 관리</h2>
+            <p class="text-gray-600">사역 관리 기능이 여기에 표시됩니다.</p>
+          </div>
+        </div>
+
+        <div id="content-prayers" class="tab-content hidden">
+          <div class="glass rounded-2xl p-6 shadow-xl">
+            <h2 class="text-xl font-bold mb-6">기도제목 관리</h2>
+            <p class="text-gray-600">기도제목 관리 기능이 여기에 표시됩니다.</p>
+          </div>
+        </div>
+
+        <div id="content-reports" class="tab-content hidden">
+          <div class="space-y-6">
+            <!-- 보고서 요약 섹션 -->
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <h2 class="text-xl font-bold mb-6 text-blue-800">
+                <i class="fas fa-chart-pie mr-2"></i>재정 보고서
+              </h2>
+              
+              <!-- 전체 요약 통계 -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-sm text-green-600 font-medium">총 수입</div>
+                      <div class="text-2xl font-bold text-green-700" id="report-total-income">0원</div>
+                    </div>
+                    <i class="fas fa-arrow-up text-green-500 text-xl"></i>
+                  </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-sm text-red-600 font-medium">총 지출</div>
+                      <div class="text-2xl font-bold text-red-700" id="report-total-expense">0원</div>
+                    </div>
+                    <i class="fas fa-arrow-down text-red-500 text-xl"></i>
+                  </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-sm text-blue-600 font-medium">순 잔액</div>
+                      <div class="text-2xl font-bold text-blue-700" id="report-balance">0원</div>
+                    </div>
+                    <i class="fas fa-balance-scale text-blue-500 text-xl"></i>
+                  </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-sm text-gray-600 font-medium">총 거래</div>
+                      <div class="text-2xl font-bold text-gray-700" id="report-total-transactions">0건</div>
+                    </div>
+                    <i class="fas fa-list text-gray-500 text-xl"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 부서별 요약 -->
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <h3 class="text-lg font-bold mb-4 text-blue-800">
+                <i class="fas fa-building mr-2"></i>부서별 요약
+              </h3>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">부서</th>
+                      <th class="px-4 py-3 text-right font-semibold text-gray-700">수입</th>
+                      <th class="px-4 py-3 text-right font-semibold text-gray-700">지출</th>
+                      <th class="px-4 py-3 text-right font-semibold text-gray-700">잔액</th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-700">거래수</th>
+                    </tr>
+                  </thead>
+                  <tbody id="departments-summary-table" class="bg-white divide-y divide-gray-200">
+                    <!-- 부서별 데이터가 여기에 동적으로 추가됩니다 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- 최근 거래 내역 -->
+            <div class="glass rounded-2xl p-6 shadow-xl">
+              <h3 class="text-lg font-bold mb-4 text-blue-800">
+                <i class="fas fa-clock mr-2"></i>최근 거래 내역 (최근 10건)
+              </h3>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">날짜</th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">부서</th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">구분</th>
+                      <th class="px-4 py-3 text-left font-semibold text-gray-700">항목</th>
+                      <th class="px-4 py-3 text-right font-semibold text-gray-700">금액</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-transactions-table" class="bg-white divide-y divide-gray-200">
+                    <!-- 최근 거래가 여기에 동적으로 추가됩니다 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- Message Container -->
+      <div id="message-container" class="fixed top-4 right-4 z-40 space-y-3"></div>
+
+      <script src="static/js/app.js"></script>
+    </body>
+    </html>

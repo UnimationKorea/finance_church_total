@@ -1,0 +1,69 @@
+:root {
+  --bg: #f7fdfe;
+  --text: #39404d;
+  --deep: #02372c;
+  --primary: #1dacd3;
+  --primary-weak: rgba(29,172,211,.12);
+  --deep-weak: rgba(2,55,44,.12);
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --error: #dc2626;
+}
+
+body {
+  background: linear-gradient(135deg, var(--bg) 0%, #ffffff 100%);
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.loading {
+  display: none;
+}
+
+.loading.show {
+  display: flex;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #dc2626;
+  margin: 10px 0;
+}
+
+.success-message {
+  background-color: #d1fae5;
+  color: #16a34a;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #16a34a;
+  margin: 10px 0;
+}
+
+.quick-date-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quick-date-btn.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.quick-date-btn.active:hover {
+  background-color: #2563eb;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+}
