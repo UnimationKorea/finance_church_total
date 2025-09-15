@@ -148,7 +148,7 @@ function renderTransactionsList(transactions) {
       <td class="px-4 py-3">${t.manager || '-'}</td>
       <td class="px-4 py-3">${t.memo || '-'}</td>
       <td class="px-4 py-3 text-center">
-        <button class="text-red-600 hover:text-red-800 transition-colors" onclick="deleteTransaction(${index})">
+        <button class="text-red-600 hover:text-red-800 transition-colors" onclick="deleteTransactionById('${t.id}')">
           <i class="fas fa-trash"></i>
         </button>
       </td>
@@ -176,7 +176,31 @@ function addTransaction(transactionData) {
   return newTransaction
 }
 
-// 거래 삭제
+// 거래 삭제 (ID 기반)
+function deleteTransactionById(transactionId) {
+  if (!confirm('이 거래를 삭제하시겠습니까?')) return
+  
+  console.log('🗑️ 거래 삭제 시도:', transactionId)
+  
+  const data = loadData()
+  const initialLength = data.transactions.length
+  
+  // ID로 거래 찾아서 삭제
+  data.transactions = data.transactions.filter(t => t.id !== transactionId)
+  
+  if (data.transactions.length < initialLength) {
+    saveData(data)
+    loadTransactionsList()
+    updateDashboard()
+    showMessage('거래가 삭제되었습니다.', 'success')
+    console.log('✅ 거래 삭제 완료')
+  } else {
+    console.error('❌ 거래 삭제 실패: ID를 찾을 수 없음')
+    showMessage('삭제할 거래를 찾을 수 없습니다.', 'error')
+  }
+}
+
+// 거래 삭제 (기존 인덱스 기반 - 호환성 유지)
 function deleteTransaction(index) {
   if (!confirm('이 거래를 삭제하시겠습니까?')) return
   
@@ -404,101 +428,89 @@ function updateRecentTransactionsList(transactions) {
   `).join('')
 }
 
-// 부서별 월별 차트 업데이트
+// 부서별 현재 총계 현황 업데이트
 function updateDepartmentMonthlyCharts(transactions) {
   const container = document.getElementById('department-monthly-charts')
   if (!container) return
   
-  // 부서별 월별 데이터 집계
-  const departmentMonthlyData = {}
+  // 부서별 현재까지 총 데이터 집계
+  const departmentTotals = {}
   const departments = [...new Set(transactions.map(t => t.department || '기타'))]
   
+  // 부서별 총합 계산
   transactions.forEach(t => {
     const dept = t.department || '기타'
-    const date = new Date(t.date)
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     
-    if (!departmentMonthlyData[dept]) {
-      departmentMonthlyData[dept] = {}
-    }
-    
-    if (!departmentMonthlyData[dept][monthKey]) {
-      departmentMonthlyData[dept][monthKey] = { income: 0, expense: 0, budget: 0 }
+    if (!departmentTotals[dept]) {
+      departmentTotals[dept] = { income: 0, expense: 0, budget: 0 }
     }
     
     if (t.type === '수입') {
-      departmentMonthlyData[dept][monthKey].income += t.amount || 0
+      departmentTotals[dept].income += t.amount || 0
     } else if (t.type === '지출') {
-      departmentMonthlyData[dept][monthKey].expense += t.amount || 0
+      departmentTotals[dept].expense += t.amount || 0
     } else if (t.type === '예산') {
-      departmentMonthlyData[dept][monthKey].budget += t.amount || 0
+      departmentTotals[dept].budget += t.amount || 0
     }
   })
   
-  // 각 부서별 차트 생성
+  // 전체 최대값 계산 (그래프 스케일용)
+  const maxAmount = Math.max(...Object.values(departmentTotals).map(d => Math.max(d.income, d.expense)))
+  
+  // 각 부서별 현황 카드 생성
   container.innerHTML = departments.map(dept => {
-    const deptData = departmentMonthlyData[dept] || {}
-    const months = Object.keys(deptData).sort()
-    
-    if (months.length === 0) return ''
-    
-    // 부서별 총 예산 계산
-    const totalBudget = months.reduce((sum, month) => sum + deptData[month].budget, 0)
-    let cumulativeExpense = 0
+    const data = departmentTotals[dept] || { income: 0, expense: 0, budget: 0 }
+    const balance = data.income - data.expense
+    const budgetRatio = data.budget > 0 ? (data.expense / data.budget) * 100 : 0
     
     return `
-      <div class="border border-gray-200 rounded-lg p-3">
-        <h4 class="font-medium text-gray-800 mb-3">${dept}</h4>
-        <div class="space-y-2">
-          ${months.map(month => {
-            const data = deptData[month]
-            cumulativeExpense += data.expense
-            const budgetRatio = totalBudget > 0 ? (cumulativeExpense / totalBudget) * 100 : 0
-            const balance = data.income - data.expense
-            const [year, monthNum] = month.split('-')
-            const label = `${monthNum}월`
-            
-            return `
-              <div class="bg-gray-50 rounded p-2">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-sm font-medium">${label}</span>
-                  <div class="text-xs text-gray-600">
-                    <span class="mr-2">잔액: ₩${new Intl.NumberFormat('ko-KR').format(balance)}</span>
-                    <span>예산대비: ${budgetRatio.toFixed(1)}%</span>
-                  </div>
-                </div>
-                
-                <div class="grid grid-cols-3 gap-2 text-xs">
-                  <!-- 수입 -->
-                  <div>
-                    <div class="text-green-600 font-medium mb-1">수입</div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                      <div class="bg-green-500 h-2 rounded-full" style="width: ${Math.min(100, Math.max(2, (data.income / Math.max(data.income, data.expense, 1)) * 100))}%"></div>
-                    </div>
-                    <div class="text-gray-600 mt-1">₩${new Intl.NumberFormat('ko-KR').format(data.income)}</div>
-                  </div>
-                  
-                  <!-- 지출 -->
-                  <div>
-                    <div class="text-red-600 font-medium mb-1">지출</div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                      <div class="bg-red-500 h-2 rounded-full" style="width: ${Math.min(100, Math.max(2, (data.expense / Math.max(data.income, data.expense, 1)) * 100))}%"></div>
-                    </div>
-                    <div class="text-gray-600 mt-1">₩${new Intl.NumberFormat('ko-KR').format(data.expense)}</div>
-                  </div>
-                  
-                  <!-- 예산 대비 지출 -->
-                  <div>
-                    <div class="text-blue-600 font-medium mb-1">예산대비</div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                      <div class="bg-blue-500 h-2 rounded-full" style="width: ${Math.min(100, Math.max(2, budgetRatio))}%"></div>
-                    </div>
-                    <div class="text-gray-600 mt-1">${budgetRatio.toFixed(1)}%</div>
-                  </div>
-                </div>
+      <div class="border border-gray-200 rounded-lg p-4">
+        <div class="flex justify-between items-start mb-4">
+          <h4 class="font-bold text-gray-800 text-lg">${dept}</h4>
+          <div class="text-right text-sm">
+            <div class="text-gray-600">년간예산: <span class="font-semibold text-blue-600">₩${new Intl.NumberFormat('ko-KR').format(data.budget)}</span></div>
+            <div class="text-gray-600">누적지출: <span class="font-semibold text-red-600">₩${new Intl.NumberFormat('ko-KR').format(data.expense)}</span></div>
+            <div class="text-gray-600">예산대비: <span class="font-semibold ${budgetRatio > 100 ? 'text-red-600' : 'text-green-600'}">${budgetRatio.toFixed(1)}%</span></div>
+          </div>
+        </div>
+        
+        <!-- 수입/지출 그래프 -->
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-sm font-medium text-green-600">수입</span>
+              <span class="text-sm font-bold text-green-600">₩${new Intl.NumberFormat('ko-KR').format(data.income)}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-6">
+              <div class="bg-green-500 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium" 
+                   style="width: ${maxAmount > 0 ? Math.max(5, (data.income / maxAmount) * 100) : 0}%">
+                ${data.income > 0 ? new Intl.NumberFormat('ko-KR', { notation: 'compact' }).format(data.income) : ''}
               </div>
-            `
-          }).join('')}
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-sm font-medium text-red-600">지출</span>
+              <span class="text-sm font-bold text-red-600">₩${new Intl.NumberFormat('ko-KR').format(data.expense)}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-6">
+              <div class="bg-red-500 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium" 
+                   style="width: ${maxAmount > 0 ? Math.max(5, (data.expense / maxAmount) * 100) : 0}%">
+                ${data.expense > 0 ? new Intl.NumberFormat('ko-KR', { notation: 'compact' }).format(data.expense) : ''}
+              </div>
+            </div>
+          </div>
+          
+          <!-- 잔액 표시 -->
+          <div class="pt-2 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-gray-700">잔액</span>
+              <span class="text-lg font-bold ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}">
+                ₩${new Intl.NumberFormat('ko-KR').format(balance)}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     `
@@ -561,7 +573,7 @@ function updateMonthlyChart(transactions) {
     totalYearlyBudget > 0 ? (cumulative / totalYearlyBudget) * 100 : 0
   )
   
-  // 수평 바 차트 생성
+  // 수직 바 차트 생성 (수입/지출만)
   const ctx = canvas.getContext('2d')
   monthlyChart = new Chart(ctx, {
     type: 'bar',
@@ -573,105 +585,79 @@ function updateMonthlyChart(transactions) {
           data: incomeData,
           backgroundColor: 'rgba(34, 197, 94, 0.8)',
           borderColor: 'rgba(34, 197, 94, 1)',
-          borderWidth: 1,
-          yAxisID: 'y'
+          borderWidth: 1
         },
         {
           label: '지출',
           data: expenseData,
           backgroundColor: 'rgba(239, 68, 68, 0.8)',
           borderColor: 'rgba(239, 68, 68, 1)',
-          borderWidth: 1,
-          yAxisID: 'y'
-        },
-        {
-          label: '누적 지출',
-          data: cumulativeExpenseData,
-          backgroundColor: 'rgba(251, 146, 60, 0.8)',
-          borderColor: 'rgba(251, 146, 60, 1)',
-          borderWidth: 1,
-          yAxisID: 'y'
-        },
-        {
-          label: '년간예산 대비 (%)',
-          data: budgetRatios,
-          type: 'line',
-          backgroundColor: 'rgba(99, 102, 241, 0.2)',
-          borderColor: 'rgba(99, 102, 241, 1)',
-          borderWidth: 2,
-          fill: false,
-          yAxisID: 'y1'
+          borderWidth: 1
         }
       ]
     },
     options: {
-      indexAxis: 'y', // 수평 차트로 변경
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false,
-      },
       plugins: {
         legend: {
           position: 'top',
         },
         title: {
           display: true,
-          text: '월별 수입/지출/누적지출/예산대비 현황'
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              if (context.datasetIndex === 3) {
-                return `${context.dataset.label}: ${context.parsed.x.toFixed(1)}%`
-              }
-              return `${context.dataset.label}: ₩${new Intl.NumberFormat('ko-KR').format(context.parsed.x)}`
-            }
-          }
+          text: '월별 수입/지출 현황'
         }
       },
       scales: {
-        x: {
-          type: 'linear',
-          display: true,
-          position: 'bottom',
+        y: {
+          beginAtZero: true,
           ticks: {
             callback: function(value) {
               return '₩' + new Intl.NumberFormat('ko-KR').format(value)
             }
-          }
-        },
-        x1: {
-          type: 'linear',
-          display: true,
-          position: 'top',
-          grid: {
-            drawOnChartArea: false,
-          },
-          ticks: {
-            callback: function(value) {
-              return value + '%'
-            }
-          }
-        },
-        y: {
-          beginAtZero: true
-        },
-        y1: {
-          type: 'linear',
-          display: false,
-          position: 'right',
-          grid: {
-            drawOnChartArea: false,
           }
         }
       }
     }
   })
   
+  // 누적 지출 및 예산 텍스트 표시 추가
+  addCumulativeAndBudgetText(cumulativeExpenseData, totalYearlyBudget)
+  
   // 실시간 회계 현황의 월별 차트도 업데이트
   updateTransactionsMonthlyChart(monthlyData, sortedMonths)
+}
+
+// 누적 지출 및 예산 텍스트 표시
+function addCumulativeAndBudgetText(cumulativeExpenseData, totalYearlyBudget) {
+  // 차트 하단에 텍스트 정보 추가
+  const chartContainer = document.querySelector('#monthly-chart').parentElement
+  
+  // 기존 텍스트 정보 제거
+  const existingInfo = chartContainer.querySelector('.budget-info')
+  if (existingInfo) existingInfo.remove()
+  
+  const latestCumulative = cumulativeExpenseData[cumulativeExpenseData.length - 1] || 0
+  const budgetRatio = totalYearlyBudget > 0 ? (latestCumulative / totalYearlyBudget) * 100 : 0
+  
+  const infoDiv = document.createElement('div')
+  infoDiv.className = 'budget-info mt-4 p-4 bg-gray-50 rounded-lg grid grid-cols-3 gap-4 text-center'
+  infoDiv.innerHTML = `
+    <div>
+      <div class="text-sm text-gray-600">누적 지출</div>
+      <div class="text-lg font-bold text-orange-600">₩${new Intl.NumberFormat('ko-KR').format(latestCumulative)}</div>
+    </div>
+    <div>
+      <div class="text-sm text-gray-600">년간 예산</div>
+      <div class="text-lg font-bold text-blue-600">₩${new Intl.NumberFormat('ko-KR').format(totalYearlyBudget)}</div>
+    </div>
+    <div>
+      <div class="text-sm text-gray-600">예산 대비</div>
+      <div class="text-lg font-bold ${budgetRatio > 100 ? 'text-red-600' : 'text-green-600'}">${budgetRatio.toFixed(1)}%</div>
+    </div>
+  `
+  
+  chartContainer.appendChild(infoDiv)
 }
 
 // 실시간 회계 현황의 월별 차트 업데이트 (수평 HTML 차트)
